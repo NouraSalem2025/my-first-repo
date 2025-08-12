@@ -1,0 +1,37 @@
+name: Rank Tracker (Zenserp)
+
+on:
+  workflow_dispatch:   # تشغيل يدوي من تبويب Actions
+  # لو عايز تشغيل يومي تلقائي، شيل التعليق عن السطور الثلاثة الجاية:
+  # schedule:
+  #   - cron: "0 4 * * *"   # 07:00 صباحًا بتوقيت الكويت (UTC+3)
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run rank tracker (Zenserp)
+        env:
+          ZENSERP_API_KEY: ${{ secrets.ZENSERP_API_KEY }}
+          TARGET_DOMAIN:   ${{ secrets.TARGET_DOMAIN }}
+        run: python config/rank_tracker.py
+
+      - name: Commit reports
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add reports/*.csv || true
+          git commit -m "chore: update rank reports" || echo "No changes"
+          git push
